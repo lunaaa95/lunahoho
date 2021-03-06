@@ -4,7 +4,7 @@ import networkx as nx
 import operator
 
 from explib.math_utils import soft_threshold, logspace, count_edges, max_lambda
-from .py_quic import quic
+from .pyquic.py_quic import quic
 
 import logging
 

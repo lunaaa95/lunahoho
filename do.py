@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -14,6 +15,7 @@ stocks = (data.loc[:, [str(i) for i in range(1, 11)]]).values
 all_stocks = []
 for row in stocks:
     all_stocks.extend(row)
+
 '''
 # output stocks' names
 names = [str(i) for  i in set(all_stocks)]
@@ -23,7 +25,7 @@ with open('./data/stocks_names.txt', 'w') as f:
 '''
 all_stocks = np.array(all_stocks).reshape(-1,1)
 # encode data
-onehot_encoder = OneHotEncoder(sparse=False ,dtype=int)
+onehot_encoder = OneHotEncoder(sparse=False ,dtype=int, handle_unknown = "ignore")
 onehot_encoded = onehot_encoder.fit_transform(all_stocks)
 VOCAB_NUM = onehot_encoded.shape[1]
 # input a int, output a stock_name_string
@@ -70,20 +72,37 @@ temp.sort(key=lambda x: x[1])
 stock_prices = [i[0] for i in temp]
 stock_names = [stock['name'] for stock in stock_prices]
 
-cov_matrix = np.zeros((VOCAB_NUM, VOCAB_NUM), dtype=float)
-for i in tqdm(range(VOCAB_NUM-1)):
-    for j in range(i, VOCAB_NUM):
-        matched_val_1, matched_val_2 = match_series(stock_prices[i], stock_prices[j])
-        cov_matrix[i,j] = covariance(matched_val_1, matched_val_2)
-        cov_matrix[j,i] = cov_matrix[i,j]
-print(cov_matrix)
+
+if os.path.exists('./data/cov_mat.txt'):
+    cov_matrix = np.loadtxt('./data/cov_mat.txt')
+    print('use prepared cov_mat')
+else:
+    cov_matrix = np.zeros((VOCAB_NUM, VOCAB_NUM), dtype=float)
+    for i in tqdm(range(VOCAB_NUM-1)):
+        for j in range(i, VOCAB_NUM):
+            matched_val_1, matched_val_2 = match_series(stock_prices[i], stock_prices[j])
+            cov_matrix[i,j] = covariance(matched_val_1, matched_val_2)
+            cov_matrix[j,i] = cov_matrix[i,j]
+    np.savetxt('./data/cov_mat.txt', cov_matrix)
+    print('use new cov_mat and success save it')
+#test = np.loadtxt('cov_mat.txt')
 
 from explib.models.mgl_opt import solve_mgl
+
+label_mat_list = [np.array(name_to_array(i)) for i in stocks]
+print('label_mat_list prepared!')
+
 emp_cov_list = []
-emp_cov_list.append(cov_matrix)
-label_mat_list = []
-label_mat_list.append(np.identity(VOCAB_NUM))
-print(label_mat_list)
+for fund in tqdm(stocks):
+    length = len(fund)
+    idx = name_to_idx(fund)
+    cov_x = np.zeros((length, length))
+    for i in range(length):
+        for j in range(i,length):
+            cov_x[i][j] = cov_matrix[idx[i],idx[j]]
+            cov_x[j][i] = cov_x[i][j]
+    emp_cov_list.append(cov_x)
+print('emp_cov_list prepared!')
 
 seed = 0
 with np.errstate(all='raise'):
@@ -99,10 +118,13 @@ with np.errstate(all='raise'):
                                  seed=seed)
 
 from explib._helper import *
+print('cal success!')
 
 X_filtered_list = [X.copy() for X in X_list]
 for X in X_filtered_list:
     X[np.isclose(X_list[0], 0, atol=.04)] = 0
     pass
 print('------')
-show_tensor(X_filtered_list)
+np.save("X.npy", X_filtered_list)
+print('X_filetered_list saved!')
+# show_tensor(X_filtered_list)

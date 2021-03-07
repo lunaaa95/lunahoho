@@ -103,21 +103,32 @@ def evaluate(model, data=val_data):
     print("eval_loss:", total_loss)
     return total_loss
 
+from sklearn import metrics
 def cal_precision(model, data=test_data):
     pre_labels = []
+    pre_p = []
     labels = []
     total_cnt = len(data)
     correct_cnt = 0
     with th.no_grad():
-        for batch_idx, (graph, fund_label) in enumerate(data):
+        for idx, (graph, fund_label) in enumerate(data):
             p = model(graph, graph.ndata['h']).reshape(1,-1)
+            pre_p.append( p.data.view(-1).numpy())
             pre_labels.append(np.argmax(p))
             labels.append(fund_label)
-
     for i in range(total_cnt):
         if pre_labels[i] == labels[i]:
             correct_cnt += 1
-    return correct_cnt / total_cnt
+    performance = {}
+    performance['precision'] = metrics.precision_score(labels, pre_labels, average='weighted')
+    performance['acc'] = metrics.accuracy_score(labels, pre_labels)
+    performance['recall'] = metrics.recall_score(labels, pre_labels, average='weighted')
+    performance['F1'] = metrics.f1_score(labels, pre_labels, average='weighted')
+    print('pre_p.shape', np.array(pre_p))
+    performance['auroc'] = metrics.roc_auc_score(labels, np.array(pre_p), multi_class='ovo', average='weighted')
+    for key, value in performance.items():
+        print(key, ":\t", value)
+    return performance
 
 # create a GCN model
 
@@ -155,8 +166,8 @@ for epoch in range(EPOCHS):
     else:
         scheduler.step()
         print('learning_rate decay')
-        print('precision:', cal_precision(model))
+        print('performance:', cal_precision(model))
     print('---------------')
-print('final precision:', cal_precision(model))
+print('final performance:', cal_precision(model))
 
 

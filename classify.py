@@ -133,7 +133,7 @@ def cal_precision(model, data=test_data):
 # create a GCN model
 
 H = 16
-NUM_CLASSES = 9
+NUM_CLASSES = 4
 
 g1 = to_dgl_graph(tensors[1], label_mat_list[1])
 g1

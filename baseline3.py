@@ -19,8 +19,12 @@ train, val = th.utils.data.random_split(fundLabel_stocksLabel, (length_data - le
 
 train_X = np.array([item[1] for item in train])
 train_y = np.array([item[0] for item in train])
+
 # build model
 model = clf = LogisticRegression(random_state=0).fit(train_X, train_y)
 val_X = np.array([item[1] for item in val])
 val_y = np.array([item[0] for item in val])
 print(model.score(val_X, val_y))
+
+# cal metrics
+

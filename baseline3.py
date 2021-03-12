@@ -16,6 +16,8 @@ fundLabel_stocksLabel
 length_data = len(fundLabel_stocksLabel)
 length_val = int(len(fundLabel_stocksLabel) * 0.4)
 train, val = th.utils.data.random_split(fundLabel_stocksLabel, (length_data - length_val , length_val), generator=th.Generator().manual_seed(42))
+print(np.sum(val[0][1]))
+exit()
 
 train_X = np.array([item[1] for item in train])
 train_y = np.array([item[0] for item in train])

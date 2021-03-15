@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from dgl.nn import GraphConv
 import matplotlib.pyplot as plt
 from explib._helper import *
-from classify import *
+from main_model import *
 
 USE_CUDA = th.cuda.is_available()
 print(USE_CUDA)
@@ -65,7 +65,7 @@ for epoch in range(EPOCHS):
         optimizer.step()
         epoch_loss += loss.detach().item()
     print('epoch loss:', epoch_loss)
-    val_loss = evaluate(model)
+    val_loss = evaluate(model, val_data, loss_func)
     if len(val_losses) == 0 or val_loss < min(val_losses):
         print('save best model to baseline2.ph')
         th.save(model.state_dict,'./data/baseline2.ph')
@@ -73,8 +73,8 @@ for epoch in range(EPOCHS):
     else:
         scheduler.step()
         print('learning_rate decay')
-        print('performance:', cal_precision(model))
+        print('performance:', cal_precision(model, test_data, loss_func))
     print('---------------')
-print('final performance:', cal_precision(model))
+print('final performance:', cal_precision(model, test_data, loss_func))
 
 

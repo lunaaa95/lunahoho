@@ -37,7 +37,7 @@ def to_dgl_graph(mat, label):
     g.ndata['h'] = th.FloatTensor(label)
     return g
 
-def evaluate(model, data):
+def evaluate(model, data, loss_func):
     model.eval()
     total_loss = 0.
     with th.no_grad():
@@ -49,7 +49,7 @@ def evaluate(model, data):
     print("eval_loss:", total_loss)
     return total_loss
 
-def cal_precision(model, data):
+def cal_precision(model, data, loss_func):
     pre_labels = []
     pre_p = []
     labels = []
@@ -144,10 +144,9 @@ if __name__ == '__main__':
 
     model = GCN(g1.ndata['h'].shape[1], H, NUM_CLASSES)
 
-    EPOCHS = 30
+    EPOCHS = 100
     LEARNING_RATE = 1e-2
     optimizer = th.optim.Adam(model.parameters(), lr=LEARNING_RATE)
-    scheduler = th.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
     loss_func = nn.NLLLoss()
     val_losses = []
     for epoch in range(EPOCHS): 
@@ -162,16 +161,15 @@ if __name__ == '__main__':
             optimizer.step()
             epoch_loss += loss.detach().item()
         print('epoch loss:', epoch_loss)
-        val_loss = evaluate(model, val_data)
+        val_loss = evaluate(model, val_data, loss_func)
         if len(val_losses) == 0 or val_loss < min(val_losses):
             print('save best model to model.ph')
             th.save(model.state_dict,'./data/model.ph')
             val_losses.append(val_loss)
         else:
-            scheduler.step()
             print('learning_rate decay')
-            print('performance:', cal_precision(model, test_data))
+            print('performance:', cal_precision(model, test_data, loss_func))
         print('---------------')
-    print('final performance:', cal_precision(model, test_data))
+    print('final performance:', cal_precision(model, test_data, loss_func))
 
 

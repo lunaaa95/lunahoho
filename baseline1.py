@@ -144,8 +144,8 @@ if __name__ == '__main__':
 
     model = GCN(g1.ndata['h'].shape[1], H, NUM_CLASSES)
 
-    EPOCHS = 30
-    LEARNING_RATE = 1e-2
+    EPOCHS = 100
+    LEARNING_RATE = 1e-3
     optimizer = th.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     scheduler = th.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
     loss_func = nn.NLLLoss()
